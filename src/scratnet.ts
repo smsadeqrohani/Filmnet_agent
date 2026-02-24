@@ -4,10 +4,12 @@
 
 const BASE = 'https://api-v3.scratnet.com';
 
-const DEFAULT_HEADERS = {
+const DEFAULT_HEADERS: Record<string, string> = {
   accept: 'application/json, text/plain, */*',
   'content-type': 'application/json',
-  'user-agent': 'FilmnetBot/1.0',
+  origin: 'https://admin-v3.scratnet.com',
+  referer: 'https://admin-v3.scratnet.com/',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
 };
 
 const ADMIN_TOKEN_TTL_MS = 50 * 60 * 1000; // 50 دقیقه
@@ -23,19 +25,28 @@ async function loginByPassword(
       headers: DEFAULT_HEADERS,
       body: JSON.stringify({ msisdn, password }),
     });
-    const data = (await res.json()) as {
-      token?: string;
-      accessToken?: string;
-      data?: { token?: string };
-      message?: string;
-    };
-    const token = data.token ?? data.accessToken ?? data.data?.token;
+    const raw = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      console.error('[scratnet] login HTTP', res.status, raw);
+    }
+    // پاسخ واقعی اسکرت‌نت: { data: { accessToken: { accessToken: "eyJ...", ttl: ... }, user, resources } }
+    const data = raw.data as Record<string, unknown> | undefined;
+    const accessTokenObj = data?.accessToken as Record<string, unknown> | undefined;
+    const token =
+      (accessTokenObj?.accessToken as string) ??
+      (raw.token as string) ??
+      (raw.accessToken as string) ??
+      (raw.access_token as string) ??
+      (data?.token as string) ??
+      (data?.accessToken as string);
     if (token && typeof token === 'string') {
       return { success: true, token };
     }
+    const message = (raw.message as string) ?? (raw.error as string) ?? 'ورود ناموفق بود.';
+    console.error('[scratnet] login response not ok', res.status, JSON.stringify(raw));
     return {
       success: false,
-      message: data.message ?? 'ورود ناموفق بود.',
+      message: String(message),
     };
   } catch (e) {
     console.error('[scratnet] login error', e);
@@ -48,13 +59,13 @@ export async function getAdminToken(): Promise<string | null> {
   if (adminTokenCache && Date.now() < adminTokenCache.expiresAt) {
     return adminTokenCache.token;
   }
-  const msisdn = process.env.SCRATNET_ADMIN_MSISDN;
+  const msisdn = process.env.SCRATNET_ADMIN_MSISDN?.trim();
   const password = process.env.SCRATNET_ADMIN_PASSWORD;
   if (!msisdn || !password) {
-    console.error('[scratnet] SCRATNET_ADMIN_MSISDN or SCRATNET_ADMIN_PASSWORD not set');
+    console.error('[scratnet] SCRATNET_ADMIN_MSISDN or SCRATNET_ADMIN_PASSWORD not set in env (check Vercel Project Settings → Environment Variables)');
     return null;
   }
-  const result = await loginByPassword(msisdn.trim(), password);
+  const result = await loginByPassword(msisdn, password);
   if (!result.success) {
     console.error('[scratnet] admin login failed', result.message);
     return null;
