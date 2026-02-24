@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.local
+*.js
+*.js.map
+*.d.ts
+!.config/**/*.js
+.DS_Store
