@@ -10,9 +10,9 @@ export interface CatalogItem {
 
 /** پلن‌های اشتراک (subscriptionPlanId از سیستم اسکرت‌نت) */
 export const subscriptionPlans: CatalogItem[] = [
+  { id: '6e391fe2-2034-4844-9643-a677df226b3e', title: 'اشتراک ۱ ماهه' },
   { id: '3e9f3f32-5f7a-4220-95d9-bd5406eaf9ca', title: 'اشتراک ۳ ماهه' },
-  { id: '00000000-0000-0000-0000-000000000000', title: 'اشتراک ۱ ماهه' },
-  { id: '00000000-0000-0000-0000-000000000001', title: 'اشتراک ۶ ماهه' },
+  { id: '27535ab0-db4f-4337-b999-13081b23c00c', title: 'اشتراک ۶ ماهه' },
 ];
 
 /** بلیت‌های سینما آنلاین (ticketId از سیستم اسکرت‌نت) */
