@@ -130,7 +130,7 @@ export async function giveUserTicket(
           price: 0,
           discountCode: '',
           issuerAdmin: '',
-          startTime: new Date().toISOString(),
+          startTime: new Date(Date.now() + (3 * 60 + 30) * 60 * 1000).toISOString(), // now + 3:30
         }),
       }
     );
