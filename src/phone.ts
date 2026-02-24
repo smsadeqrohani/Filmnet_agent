@@ -1,35 +1,31 @@
 /**
  * Iranian mobile number validation and normalization.
- * Accepts: 09XXXXXXXXX, +989XXXXXXXXX, 989XXXXXXXXX, with optional spaces/dashes/parentheses.
- * Normalizes to: 989XXXXXXXXX (no plus sign) for API usage.
+ * Supports (with optional spaces/dashes/parentheses):
+ *   +989XXXXXXXXX, 989XXXXXXXXX, 09XXXXXXXXX, 9XXXXXXXXX,
+ *   09XX XXX XX XX, 9XX XXX XX XX
+ * Normalizes to: 989XXXXXXXXX (no plus) for API usage.
  */
 
 const IRAN_MOBILE_REGEX = /^9\d{9}$/;
 
-/**
- * Strip all non-digit characters from a string.
- */
 function digitsOnly(input: string): string {
   return input.replace(/\D/g, '');
 }
 
-/**
- * Normalize and validate Iranian mobile number.
- * @param input - User input (e.g. "0912 123 4567", "+989121234567", "989121234567")
- * @returns Normalized "989XXXXXXXXX" or null if invalid
- */
 export function normalizeIranianMobile(input: string): string | null {
   if (!input || typeof input !== 'string') return null;
   const digits = digitsOnly(input.trim());
   let normalized: string;
   if (digits.startsWith('98') && digits.length === 12) {
-    normalized = digits; // 989XXXXXXXXX
+    normalized = digits; // +989... or 989...
+  } else if (digits.startsWith('09') && digits.length === 11) {
+    normalized = '98' + digits.slice(1); // 09XX... or 09XX XXX XX XX
   } else if (digits.startsWith('9') && digits.length === 10) {
-    normalized = '98' + digits; // 09XXXXXXXXX -> 989XXXXXXXXX
+    normalized = '98' + digits; // 9XX... or 9XX XXX XX XX
   } else {
     return null;
   }
-  const mobilePart = normalized.slice(2); // 9XXXXXXXXX
+  const mobilePart = normalized.slice(2);
   return IRAN_MOBILE_REGEX.test(mobilePart) ? normalized : null;
 }
 
